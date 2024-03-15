@@ -43,31 +43,36 @@ function resetGame() {
 
 function displayWord() {
   word.innerHTML = `
-        ${selectWord
-          .split("")
-          .map(
-            (letter) => `
-                    <span class="letter">
-                        ${correctLetters.includes(letter) ? letter : "*"}
-                    </span>
-                `
-          )
-          .join("")}
-    `;
+    ${selectWord
+      .split("")
+      .map((letter) => {
+        if (letter === " ") {
+          return "<span class='space'>&nbsp;</span>";
+        } else {
+          return `
+            <span class="letter">
+              ${correctLetters.includes(letter) ? letter : "*"}
+            </span>
+          `;
+        }
+      })
+      .join("")}
+  `;
 
-  const innerWord = word.innerText.replace(/\n/g, "");
-
-  if (innerWord === selectWord) {
+  if (correctLetters.length === selectWord.replace(/ /g, "").length) {
     finalMsg.innerText = "Congratulations! You Won!";
+    popup.style.display = "flex";
+  } else if (wrongLetters.length === attempts) {
+    finalMsg.innerText = "You Lost.";
     popup.style.display = "flex";
   }
 }
 
 function updateWrongLetters() {
   wrong.innerHTML = `
-        ${wrongLetters.length > 0 ? "<p>wrong letters</p>" : ""}
-        ${wrongLetters.map((letter) => `<span>${letter}</span>`).join("")}
-    `;
+    ${wrongLetters.length > 0 ? "<p>wrong letters</p>" : ""}
+    ${wrongLetters.map((letter) => `<span>${letter}</span>`).join("")}
+  `;
 
   if (wrongLetters.length === attempts) {
     finalMsg.innerText = "You Lost.";
@@ -99,36 +104,36 @@ function hideAllWords() {
 
 function createWordsTable(words) {
   return `
-        <table>
-            <thead>
-                <tr>
-                    <th>Word</th>
-                    <th>Edit</th>
-                    <th>Delete</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${words.map(createWordTableRow).join("")}
-            </tbody>
-        </table>
-    `;
+    <table>
+      <thead>
+        <tr>
+          <th>Word</th>
+          <th>Edit</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${words.map(createWordTableRow).join("")}
+      </tbody>
+    </table>
+  `;
 }
 
 function createWordTableRow(word) {
   return `
-        <tr>
-            <td>${word}</td>
-            <td><button class="edit-btn" onclick="editWord('${word}')">Edit</button></td>
-            <td><button class="delete-btn" onclick="deleteWord('${word}')">Delete</button></td>
-        </tr>
-    `;
+    <tr>
+      <td>${word}</td>
+      <td><button class="edit-btn" onclick="editWord('${word}')">Edit</button></td>
+      <td><button class="delete-btn" onclick="deleteWord('${word}')">Delete</button></td>
+    </tr>
+  `;
 }
 
 function editWord(oldWord) {
   const newWord = prompt(`Edit word "${oldWord}" to:`);
   if (newWord) {
     const index = words.indexOf(oldWord);
-    words[index] = newWord;
+    words[index] = newWord.trim();
     showAllWords();
     saveWordsToLocalStorage();
   }
@@ -155,10 +160,11 @@ document.addEventListener("click", (e) => {
 });
 
 window.addEventListener("keydown", (e) => {
-  if (e.keyCode >= 65 && e.keyCode <= 90) {
-    const letter = e.key;
+  if (popup.style.display === "none" && e.keyCode >= 65 && e.keyCode <= 90) {
+    const letter = e.key.toLowerCase();
+    const selectWordWithoutSpaces = selectWord.replace(/ /g, "");
 
-    if (selectWord.includes(letter)) {
+    if (selectWordWithoutSpaces.includes(letter) || letter === " ") {
       if (!correctLetters.includes(letter)) {
         correctLetters.push(letter);
         displayWord();
@@ -181,7 +187,7 @@ allwordsBtn.addEventListener("click", showAllWords);
 addWordBtn.addEventListener("click", () => {
   const newWord = prompt("Enter the new word:");
   if (newWord) {
-    words.push(newWord);
+    words.push(newWord.trim());
     saveWordsToLocalStorage();
     resetGame();
   }
